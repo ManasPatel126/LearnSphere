@@ -1,0 +1,527 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Phase 5 — Roadmap + Chat styles
+   Design direction: dark-panel sidebar, off-white main, slate typography.
+   Accent: indigo (#4F46E5) — distinct from defaults, works on both bg tones.
+───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --color-bg: #f8f8f6;
+  --color-surface: #ffffff;
+  --color-border: #e2e2dc;
+  --color-text: #1a1a18;
+  --color-muted: #6b6b60;
+  --color-accent: #4f46e5;
+  --color-accent-soft: #ede9fe;
+  --color-chat-bg: #16161a;
+  --color-chat-surface: #222228;
+  --color-chat-border: #2e2e38;
+  --color-chat-text: #e8e8e2;
+  --color-chat-muted: #888880;
+  --color-user-bubble: #4f46e5;
+  --color-assistant-bubble: #222228;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+
+.result-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 100vh;
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+}
+
+@media (min-width: 1024px) {
+  .result-layout {
+    grid-template-columns: 1fr 380px;
+  }
+}
+
+/* ── Roadmap main ────────────────────────────────────────────────────────── */
+
+.roadmap-main {
+  max-width: 760px;
+  padding: 48px 32px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.roadmap-header {
+  margin-bottom: 32px;
+}
+
+.roadmap-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.badge {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--color-muted);
+}
+
+.weeks-label {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.roadmap-title {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+/* ── Week tabs ───────────────────────────────────────────────────────────── */
+
+.week-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0;
+}
+
+.week-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.week-tab:hover {
+  color: var(--color-text);
+}
+
+.week-tab.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+/* ── Module card ─────────────────────────────────────────────────────────── */
+
+.module-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-card);
+}
+
+.module-header {
+  margin-bottom: 28px;
+}
+
+.week-number {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.module-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+
+.module-section {
+  margin-bottom: 28px;
+}
+
+.section-heading {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 14px;
+}
+
+/* Concept list */
+.concept-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.concept-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.concept-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* Resource grid */
+.resource-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resource-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.resource-card:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.resource-type-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.resource-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resource-platform {
+  display: block;
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+.resource-arrow {
+  font-size: 14px;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+/* Project + Checkpoint */
+.project-card,
+.checkpoint-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.project-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.checkpoint-card {
+  background: var(--color-accent-soft);
+  border: 1px solid #c7d2fe;
+}
+
+.project-icon,
+.checkpoint-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Chat aside ──────────────────────────────────────────────────────────── */
+
+.chat-aside {
+  background: var(--color-chat-bg);
+  border-left: 1px solid var(--color-chat-border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  transition: width 0.2s;
+}
+
+.chat-aside.collapsed {
+  justify-content: flex-start;
+  padding: 16px;
+}
+
+.chat-toggle {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: opacity 0.15s;
+}
+
+.chat-toggle:hover {
+  opacity: 0.88;
+}
+
+/* ── Chat panel ──────────────────────────────────────────────────────────── */
+
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-chat-border) transparent;
+}
+
+.chat-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 92%;
+}
+
+.chat-msg--user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.chat-msg--assistant {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.chat-bubble {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.chat-msg--user .chat-bubble {
+  background: var(--color-user-bubble);
+  color: #fff;
+  border-bottom-right-radius: 2px;
+}
+
+.chat-msg--assistant .chat-bubble {
+  background: var(--color-assistant-bubble);
+  color: var(--color-chat-text);
+  border-bottom-left-radius: 2px;
+  border: 1px solid var(--color-chat-border);
+}
+
+.chat-bubble code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(255,255,255,0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.chat-bubble pre {
+  background: rgba(0,0,0,0.3);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.chat-bubble pre code {
+  background: none;
+  padding: 0;
+}
+
+.streaming-cursor {
+  color: var(--color-accent);
+  animation: blink 0.8s steps(1) infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Sources */
+.chat-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.sources-label {
+  font-size: 11px;
+  color: var(--color-chat-muted);
+  font-weight: 500;
+}
+
+.source-chip {
+  font-size: 11px;
+  color: var(--color-chat-muted);
+  background: var(--color-chat-surface);
+  border: 1px solid var(--color-chat-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 180px;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
+  transition: border-color 0.12s;
+}
+
+.source-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ── Input row ───────────────────────────────────────────────────────────── */
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-chat-border);
+  background: var(--color-chat-bg);
+}
+
+.chat-input {
+  flex: 1;
+  background: var(--color-chat-surface);
+  border: 1px solid var(--color-chat-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  color: var(--color-chat-text);
+  resize: none;
+  outline: none;
+  max-height: 120px;
+  transition: border-color 0.15s;
+}
+
+.chat-input:focus {
+  border-color: var(--color-accent);
+}
+
+.chat-input::placeholder {
+  color: var(--color-chat-muted);
+}
+
+.chat-send {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  width: 38px;
+  height: 38px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.chat-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.chat-send:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+.spin {
+  animation: rotate 0.7s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.chat-disclaimer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-chat-muted);
+  padding: 8px 16px 12px;
+  margin: 0;
+}

@@ -1,0 +1,27 @@
+# Phase 2 — Web Research Engine dependencies
+
+# Google Gemini (quality scoring)
+google-generativeai>=0.7.0
+
+# YouTube transcript fetching (no API key needed for transcripts)
+youtube-transcript-api>=0.6.2
+
+# YouTube Data API v3 (for search — requires YOUTUBE_API_KEY)
+google-api-python-client>=2.100.0
+
+# GitHub REST API
+requests>=2.31.0
+
+# Reddit API
+praw>=7.7.1
+
+# Task queue
+rq>=1.16.0
+redis>=5.0.0
+
+# Flask (for routes.py blueprint)
+flask>=3.0.0
+
+# Testing
+pytest>=8.0.0
+pytest-mock>=3.12.0

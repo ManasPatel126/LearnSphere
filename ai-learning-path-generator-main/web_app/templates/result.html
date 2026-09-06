@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ path.title }} | Learning Path</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/glassmorphic.css') }}">
+</head>
+<body class="grid-background min-h-screen" data-is-authenticated="{{ 'true' if current_user.is_authenticated else 'false' }}">
+    <nav class="glass-nav py-4 px-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-white">
+                Learning<span class="text-neon-pink">Path</span>
+            </a>
+            <div class="flex items-center gap-6">
+                {% if current_user.is_authenticated %}
+                    <a href="/dashboard" class="text-gray-700 dark:text-secondary hover:text-neon-cyan transition">Dashboard</a>
+                    <a href="/" class="neon-btn-sm">New Path</a>
+                    <a href="{{ url_for('auth.logout') }}" class="text-gray-700 dark:text-secondary hover:text-neon-cyan transition">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="text-gray-700 dark:text-secondary hover:text-neon-cyan transition">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="neon-btn-sm">Register</a>
+                {% endif %}
+                <!-- Theme toggle -->
+                <button id="theme-toggle" class="ml-2 inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-secondary dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-magenta" aria-label="Toggle dark mode">
+                    <svg id="theme-toggle-light-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 15a5 5 0 100-10 5 5 0 000 10zM10 1a1 1 0 011 1v1a1 1 0 11-2 0V2a1 1 0 011-1zm0 14a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm9-5a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM3 10a1 1 0 01-1 1H1a1 1 0 110-2h1a1 1 0 011 1zm12.364-6.364a1 1 0 010 1.414L14.95 6.464a1 1 0 01-1.414-1.414l1.414-1.414a1 1 0 011.414 0zM5.05 14.95a1 1 0 011.414 0l1.414-1.414a1 1 0 10-1.414-1.414L5.05 13.536a1 1 0 010 1.414zm9.9 0a1 1 0 10-1.414-1.414l-1.414 1.414a1 1 0 101.414 1.414l1.414-1.414zM5.05 5.05a1 1 0 011.414 0L7.878 6.464A1 1 0 116.464 7.878L5.05 6.464A1 1 0 015.05 5.05z" clip-rule="evenodd"></path>
+                    </svg>
+                    <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8 8 0 1010.586 10.586z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Unified Sticky Header Bar -->
+    <div class="sticky top-0 z-40 glass-nav border-b border-gray-200 dark:border-gray-700 shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <!-- Left: Path Title & Key Stats -->
+                <div class="flex-1">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ path.title }}</h1>
+                    <div class="flex flex-wrap items-center gap-3 text-sm">
+                        <span class="flex items-center gap-1 text-gray-700 dark:text-secondary">
+                            <svg class="w-4 h-4 text-neon-cyan" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                            </svg>
+                            <strong>{{ path.total_hours }}</strong> Hours
+                        </span>
+                        <span class="text-gray-400">•</span>
+                        <span class="flex items-center gap-1 text-gray-700 dark:text-secondary">
+                            <svg class="w-4 h-4 text-neon-purple" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                            </svg>
+                            <strong>{{ path.milestones|length }}</strong> Milestones
+                        </span>
+                        <span class="text-gray-400">•</span>
+                        <span class="flex items-center gap-1 text-gray-700 dark:text-secondary">
+                            <svg class="w-4 h-4 text-sunshine" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                            </svg>
+                            <strong>{{ path.duration_weeks }}</strong> Weeks
+                        </span>
+                        <span class="text-gray-400">•</span>
+                        <span class="px-2 py-1 bg-neon-purple bg-opacity-20 border border-neon-purple text-neon-purple rounded-full text-xs font-medium">
+                            {{ path.expertise_level|title }}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Right: Action Buttons -->
+                <div class="flex items-center gap-3">
+                    <a href="/download/{{ path.id }}" class="inline-flex items-center gap-2 px-4 py-2 bg-magenta text-white rounded-full font-medium text-sm hover:bg-magentaLight transition-colors duration-300">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                        Download
+                    </a>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.save_path') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-sunshine text-white rounded-full font-medium text-sm hover:bg-sunnyYellow transition-colors duration-300">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z"/>
+                        </svg>
+                        Save
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-sunshine text-white rounded-full font-medium text-sm hover:bg-sunnyYellow transition-colors duration-300">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z"/>
+                        </svg>
+                        Login to Save
+                    </a>
+                    {% endif %}
+                    <button class="share-button inline-flex items-center gap-2 px-4 py-2 border-2 border-magenta text-magenta rounded-full font-medium text-sm hover:bg-magenta hover:text-white transition-colors duration-300">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/>
+                        </svg>
+                        Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-6 py-8">
+        {% set total_milestones = progress_total %}
+        {% set completed_milestones = progress_completed %}
+        {% set progress_map = progress or {} %}
+        {% set progress_percentage = progress_percentage_value %}
+        <!-- Hidden Path ID for JavaScript -->
+        <input type="hidden" id="path-id" value="{{ path.id }}">
+        
+        <!-- Learning Path Overview -->
+        <div class="max-w-5xl mx-auto">
+            <div class="glass-card p-8 my-8">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Left Column: Description -->
+                    <div class="md:col-span-2">
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">About This Path</h3>
+                            <p class="text-gray-700 dark:text-secondary leading-relaxed">{{ path.description }}</p>
+                        </div>
+                        
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">What You'll Learn</h3>
+                            <ul class="space-y-3">
+                                {% for goal in path.goals %}
+                                <li class="flex items-start">
+                                    <span class="text-neon-cyan mr-2">✓</span>
+                                    <span class="text-gray-700 dark:text-secondary">{{ goal }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        {% if path.prerequisites %}
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-bold text-white mb-4">Before You Start</h3>
+                            <ul class="space-y-3">
+                                {% for prereq in path.prerequisites %}
+                                <li class="flex items-start">
+                                    <span class="text-neon-purple mr-2">•</span>
+                                    <span class="text-secondary">{{ prereq }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Right Column: Progress -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Your Progress</h3>
+                        <div class="mb-6">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-secondary text-sm">Learning Journey</span>
+                                <span class="text-white text-sm font-medium" id="progress-percentage-text">{{ progress_percentage|round(0) }}%</span>
+                            </div>
+                            <div class="progress-bar-container" data-progress="{{ progress_percentage }}">
+                                <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+                            </div>
+                            <p id="progress-text" class="text-xs text-secondary mt-2">{{ completed_milestones }} of {{ total_milestones }} milestones completed ({{ progress_percentage|round(0) }}%)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Visualization -->
+            <div class="glass-card p-8 my-12">
+                <h3 class="text-2xl font-bold text-white mb-6">Your Learning <span class="text-neon-cyan">Journey</span></h3>
+                <div class="h-72">
+                    <canvas id="progressChart" data-milestones='{{ path.milestones | tojson }}'></canvas>
+                </div>
+            </div>
+            
+            <!-- Milestones Section -->
+            <div class="my-12">
+                <h3 class="text-3xl font-bold text-white mb-8 text-center">Your Learning <span class="text-neon-purple">Milestones</span></h3>
+                <!-- Milestone Timeline -->
+                <div class="relative py-8">
+                    <!-- Timeline Line -->
+                    
+                    <div class="space-y-12">
+                        {% for milestone in path.milestones %}
+                            <div class="relative milestone-card">
+                                <!-- Milestone Card -->
+                                <div class="w-full flex justify-center mb-12">
+                                    <div class="glass-card p-8 w-full max-w-3xl border-t-4 border-magenta" id="milestone-{{ loop.index0 }}">
+                                        <div class="mb-6 text-center">
+                                            <h3 class="text-2xl font-bold text-neon-purple">Milestone {{ loop.index }}</h3>
+                                        </div>
+                                        <h4 class="text-2xl font-bold text-white mb-3">{{ milestone.title }}</h4>
+                                        <div class="flex items-center gap-2 mb-4">
+                                            <span class="px-3 py-1 {% if loop.index % 2 == 0 %}bg-sunshine text-white{% else %}bg-magentaLight text-white{% endif %} rounded-full text-sm font-medium">{{ milestone.estimated_hours }} hours</span>
+                                        </div>
+                                        
+                                        <p class="text-secondary mb-6">{{ milestone.description }}</p>
+                                        
+                                        <!-- Progress Status and Actions -->
+                                        {% if current_user.is_authenticated %}
+                                        <div class="mb-6">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="text-sm font-medium text-secondary">Progress Status:</span>
+                                                <div class="flex items-center gap-2">
+                                                    {% set milestone_status = progress_map.get(loop.index0|string) %}
+                                                    {% if milestone_status == 'completed' %}
+                                                        <span class="px-3 py-1 bg-green-500 text-white text-xs rounded-full">Completed</span>
+                                                        <button class="mark-incomplete-btn px-3 py-1 bg-gray-500 text-white text-xs rounded-full hover:bg-gray-600 transition-colors" 
+                                                                data-milestone="{{ loop.index0 }}">
+                                                            Mark Incomplete
+                                                        </button>
+                                                    {% else %}
+                                                        <span class="px-3 py-1 bg-yellow-500 text-white text-xs rounded-full">Not Started</span>
+                                                        <button class="mark-complete-btn px-3 py-1 bg-green-500 text-white text-xs rounded-full hover:bg-green-600 transition-colors" 
+                                                                data-milestone="{{ loop.index0 }}">
+                                                            Mark as Complete
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <div class="mb-8">
+                                            <h5 class="font-bold text-white mb-3">Skills you'll gain:</h5>
+                                            <div class="flex flex-wrap gap-2">
+                                                {% for skill in milestone.skills_gained %}
+                                                <span class="glass-pill">{{ skill }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Job Market Data removed from milestones - shown once at top -->
+                                        
+                                        <!-- Resources -->
+                                        <div class="mt-8">
+                                            <h4 class="text-xl font-bold text-white mb-4">Recommended Resources:</h4>
+                                            {% if milestone.resources %}
+                                                            {% set milestone_idx = loop.index0 %}
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {% for resource in milestone.resources %}
+                                                        <div class="glass-card-dark p-5 transition-all duration-300 hover:border-neon-cyan hover:border relative">
+                                                                            <input type="checkbox" class="resource-checkbox absolute top-3 right-3 w-4 h-4 text-neon-cyan bg-gray-700 border-gray-600 rounded focus:ring-neon-cyan focus:ring-2 cursor-pointer" data-milestone="{{ milestone_idx }}" data-resource="{{ loop.index0 }}">
+                                                            <div class="font-semibold text-white mb-2">
+                                                                <a href="{% if resource.url %}{{ resource.url }}{% else %}https://www.google.com/search?q={{ resource.description | urlencode }}{% endif %}" target="_blank" class="text-neon-cyan hover:text-neon-purpleLight transition-colors duration-200">
+                                                                    {{ resource.description }}
+                                                                </a>
+                                                            </div>
+                                                        <div class="text-sm text-secondary mb-3 flex items-center gap-1">
+                                                                {% if resource.type == 'Video' %}
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-sunshine" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                                                                    </svg>
+                                                                {% elif resource.type == 'Online Course' %}
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-neon-purple" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                                                                    </svg>
+                                                                {% elif resource.type == 'Book' %}
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                                                                    </svg>
+                                                                {% elif resource.type == 'Article' or resource.type == 'Tutorial' %}
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-sunnyYellow" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                                                                    </svg>
+                                                                {% else %}
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-muted" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2a1 1 0 00-1-1H8a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" />
+                                                                    </svg>
+                                                                {% endif %}
+                                                                <span>{{ resource.type }}</span>
+                                                            </div>
+                                                            <div class="flex justify-between items-center">
+                                                                <a href="{% if resource.url %}{{ resource.url }}{% else %}https://www.google.com/search?q={{ resource.description | urlencode }}{% endif %}" target="_blank" class="inline-flex items-center text-neon-cyan text-sm font-medium hover:text-neon-purple transition-colors duration-200">
+                                                                    <span>View Resource</span>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                                    </svg>
+                                                                </a>
+                                                            <span class="text-xs text-muted">{{ resource.format|default('') }}</span>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                <p class="text-muted italic">No specific resources recommended for this milestone.</p>
+                                            {% endif %}                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>            
+            <!-- Job Market Snapshot - Career Outcome Section -->
+            {% if path.job_market_data and not path.job_market_data.error %}
+            <div class="bg-gradient-to-r from-magenta to-magentaLight rounded-xl shadow-xl p-8 my-12 text-white">
+                <h3 class="text-3xl font-bold mb-3 text-center"> Your Career Outlook</h3>
+                <p class="text-center text-white opacity-90 mb-8">See the real-world impact of mastering this skill</p>
+                <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                    <div class="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
+                        <p class="text-4xl font-bold mb-2">{{ path.job_market_data.open_positions }}</p>
+                        <p class="text-sm opacity-90">Open Positions</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
+                        <p class="text-2xl font-bold mb-2">{{ path.job_market_data.average_salary }}</p>
+                        <p class="text-sm opacity-90">Average Salary</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
+                        <p class="text-lg font-semibold mb-2">Trending Employers:</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            {% for employer in path.job_market_data.trending_employers[:3] %}
+                            <span class="bg-white text-neon-purple px-3 py-1 rounded-full text-sm font-medium">{{ employer }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% if path.job_market_data.related_roles %}
+                <div class="mt-6 text-center">
+                    <p class="text-sm opacity-90 mb-2">Related Roles:</p>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        {% for role in path.job_market_data.related_roles[:5] %}
+                        <span class="bg-white bg-opacity-30 px-3 py-1 rounded-full text-sm">{{ role }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        </div>
+    </main>
+
+    <!-- Floating Chat Button -->
+    <button id="chat-toggle-btn" class="fixed bottom-8 right-8 bg-magenta text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transform hover:scale-110 transition-transform z-50">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+    </button>
+
+    <!-- Chat Panel -->
+    <div id="chat-panel" class="hidden fixed bottom-28 right-8 w-full max-w-md h-[60vh] bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col glass-card z-50">
+        <!-- Header -->
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+            <h3 class="font-bold text-lg text-gray-900 dark:text-white">Ask a follow-up question</h3>
+            <button id="chat-close-btn" class="text-gray-500 hover:text-gray-900 dark:hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div id="chat-messages" class="flex-1 p-4 space-y-4 overflow-y-auto">
+            <!-- Initial AI message -->
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-magenta flex-shrink-0 flex items-center justify-center text-white font-bold">AI</div>
+                <div class="glass-card-dark p-3 rounded-lg max-w-xs">
+                    <p class="text-sm text-gray-200">Ask me anything about {{ path.topic }}!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Form -->
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <form id="chat-form" class="flex items-center gap-2">
+                <input type="text" id="chat-input" class="glass-input w-full" placeholder="Type your question..." autocomplete="off">
+                <button type="submit" class="neon-btn-sm">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Script -->
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chat Panel Logic
+            const chatToggleBtn = document.getElementById('chat-toggle-btn');
+            const chatPanel = document.getElementById('chat-panel');
+            const chatCloseBtn = document.getElementById('chat-close-btn');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const chatMessages = document.getElementById('chat-messages');
+
+            chatToggleBtn.addEventListener('click', () => {
+                chatPanel.classList.toggle('hidden');
+            });
+
+            chatCloseBtn.addEventListener('click', () => {
+                chatPanel.classList.add('hidden');
+            });
+
+            chatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const question = chatInput.value.trim();
+                if (!question) return;
+
+                // Display user message
+                const userMessageHtml = `
+                    <div class="flex items-start gap-3 justify-end">
+                        <div class="glass-card-dark p-3 rounded-lg max-w-xs bg-neon-cyan bg-opacity-20">
+                            <p class="text-sm text-white">${question}</p>
+                        </div>
+                    </div>
+                `;
+                chatMessages.innerHTML += userMessageHtml;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                chatInput.value = '';
+
+                // Show typing indicator
+                const typingIndicatorHtml = `
+                    <div id="typing-indicator" class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-magenta flex-shrink-0 flex items-center justify-center text-white font-bold">AI</div>
+                        <div class="glass-card-dark p-3 rounded-lg max-w-xs">
+                            <p class="text-sm text-gray-200">Typing...</p>
+                        </div>
+                    </div>
+                `;
+                chatMessages.innerHTML += typingIndicatorHtml;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Send to backend
+                fetch('/api/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        path_id: pathId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('typing-indicator').remove();
+                    if (data.success) {
+                        const aiMessageHtml = `
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-magenta flex-shrink-0 flex items-center justify-center text-white font-bold">AI</div>
+                                <div class="glass-card-dark p-3 rounded-lg max-w-xs">
+                                    <p class="text-sm text-gray-200">${data.data.answer}</p>
+                                </div>
+                            </div>
+                        `;
+                        chatMessages.innerHTML += aiMessageHtml;
+                    } else {
+                        const errorMessageHtml = `
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-red-500 flex-shrink-0 flex items-center justify-center text-white font-bold">!</div>
+                                <div class="glass-card-dark p-3 rounded-lg max-w-xs">
+                                    <p class="text-sm text-red-400">Error: ${data.message}</p>
+                                </div>
+                            </div>
+                        `;
+                        chatMessages.innerHTML += errorMessageHtml;
+                    }
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                })
+                .catch(error => {
+                    document.getElementById('typing-indicator').remove();
+                    const errorMessageHtml = `
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-red-500 flex-shrink-0 flex items-center justify-center text-white font-bold">!</div>
+                            <div class="glass-card-dark p-3 rounded-lg max-w-xs">
+                                <p class="text-sm text-red-400">A network error occurred.</p>
+                            </div>
+                        </div>
+                    `;
+                    chatMessages.innerHTML += errorMessageHtml;
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
+            });
+
+            // FAQ Accordion
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', function() {
+                    const answer = this.nextElementSibling;
+                    const icon = this.querySelector('.faq-icon');
+                    
+                    // Toggle answer visibility
+                    answer.classList.toggle('hidden');
+                    
+                    // Rotate icon
+                    if (answer.classList.contains('hidden')) {
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+            
+            // FAQ Search
+            const faqSearch = document.getElementById('faqSearch');
+            if (faqSearch) {
+                faqSearch.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const faqItems = document.querySelectorAll('.faq-item');
+                    
+                    faqItems.forEach(item => {
+                        const question = item.querySelector('.faq-question span').textContent.toLowerCase();
+                        const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+                        
+                        if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            }
+            
+            // Share Button
+            const shareButton = document.querySelector('.share-button');
+            if (shareButton) {
+                shareButton.addEventListener('click', function() {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: document.title,
+                            url: window.location.href
+                        }).catch(err => console.log('Error sharing:', err));
+                    } else {
+                        // Fallback: copy to clipboard
+                        navigator.clipboard.writeText(window.location.href).then(() => {
+                            alert('Link copied to clipboard!');
+                        });
+                    }
+                });
+            }
+            
+            // Progress Chart
+            const ctx = document.getElementById('progressChart');
+            if (ctx) {
+                const milestones = JSON.parse(ctx.dataset.milestones);
+                const labels = milestones.map((m, i) => `M${i + 1}`);
+                const hours = milestones.map(m => m.estimated_hours);
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Estimated Hours',
+                            data: hours,
+                            borderColor: '#00D9FF',
+                            backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#fff'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#9CA3AF'
+                                },
+                                grid: {
+                                    color: 'rgba(156, 163, 175, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#9CA3AF'
+                                },
+                                grid: {
+                                    color: 'rgba(156, 163, 175, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Milestone Progress Tracking
+            const pathId = document.getElementById('path-id').value;
+            const progressBar = document.getElementById('progress-bar');
+            const progressBarContainer = document.querySelector('.progress-bar-container');
+            if (progressBar && progressBarContainer) {
+                const progressPercentage = parseFloat(progressBarContainer.dataset.progress) || 0;
+                progressBar.style.width = `${progressPercentage}%`;
+            }
+            const isAuthenticated = document.body.dataset.isAuthenticated === 'true';
+            
+            // Mark Complete/Incomplete buttons
+            document.querySelectorAll('.mark-complete-btn, .mark-incomplete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const milestoneIndex = parseInt(this.dataset.milestone);
+                    const isComplete = this.classList.contains('mark-complete-btn');
+                    
+                    fetch('/api/track-milestone', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            path_id: pathId,
+                            milestone_index: milestoneIndex,
+                            completed: isComplete
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                });
+            });
+            
+            // Resource Checkbox Tracking - Persistent Database Storage
+            const resourceCheckboxes = document.querySelectorAll('.resource-checkbox');
+            
+            // Load saved checkbox states from database (for logged-in users)
+            if (isAuthenticated) {
+                fetch('/api/get-resource-progress/' + pathId)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            resourceCheckboxes.forEach(checkbox => {
+                                const key = 'm' + checkbox.dataset.milestone + '_r' + checkbox.dataset.resource;
+                                if (data.progress[key] && data.progress[key].completed) {
+                                    checkbox.checked = true;
+                                    checkbox.closest('.glass-card-dark').classList.add('opacity-60');
+                                }
+                            });
+                        }
+                    })
+                    .catch(error => console.error('Error loading progress:', error));
+            } else {
+                // Fallback to localStorage for non-authenticated users
+                resourceCheckboxes.forEach(checkbox => {
+                    const key = 'path_' + pathId + '_resource_' + checkbox.dataset.milestone + '_' + checkbox.dataset.resource;
+                    const saved = localStorage.getItem(key);
+                    if (saved === 'true') {
+                        checkbox.checked = true;
+                        checkbox.closest('.glass-card-dark').classList.add('opacity-60');
+                    }
+                });
+            }
+            
+            // Save checkbox state on change
+            resourceCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const milestoneIndex = parseInt(this.dataset.milestone);
+                    const resourceIndex = parseInt(this.dataset.resource);
+                    const completed = this.checked;
+                    
+                    // Visual feedback
+                    if (completed) {
+                        this.closest('.glass-card-dark').classList.add('opacity-60');
+                    } else {
+                        this.closest('.glass-card-dark').classList.remove('opacity-60');
+                    }
+                    
+                    // Save to database (for logged-in users)
+                    if (isAuthenticated) {
+                        const resourceUrl = this.closest('.glass-card-dark').querySelector('a').href;
+                        
+                        fetch('/api/track-resource', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                path_id: pathId,
+                                milestone_index: milestoneIndex,
+                                resource_index: resourceIndex,
+                                completed: completed,
+                                resource_url: resourceUrl
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log('Progress saved to database');
+                            } else {
+                                console.error('Failed to save progress:', data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error saving progress:', error);
+                        });
+                    } else {
+                        // Fallback to localStorage for non-authenticated users
+                        const key = 'path_' + pathId + '_resource_' + milestoneIndex + '_' + resourceIndex;
+                        localStorage.setItem(key, completed.toString());
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

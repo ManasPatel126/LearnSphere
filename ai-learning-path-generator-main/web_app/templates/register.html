@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Learning Path</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        (function () {
+            const storedTheme = localStorage.getItem('theme');
+            if (storedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <!-- Glassmorphic CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/glassmorphic.css') }}">
+</head>
+<body class="grid-background min-h-screen flex items-center justify-center px-6">
+    <button id="theme-toggle" class="fixed top-6 right-6 inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-secondary dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-magenta transition" aria-label="Toggle dark mode">
+        <svg id="theme-toggle-light-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 15a5 5 0 100-10 5 5 0 000 10zM10 1a1 1 0 011 1v1a1 1 0 11-2 0V2a1 1 0 011-1zm0 14a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm9-5a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM3 10a1 1 0 01-1 1H1a1 1 0 110-2h1a1 1 0 011 1zm12.364-6.364a1 1 0 010 1.414L14.95 6.464a1 1 0 01-1.414-1.414l1.414-1.414a1 1 0 011.414 0zM5.05 14.95a1 1 0 011.414 0l1.414-1.414a1 1 0 10-1.414-1.414L5.05 13.536a1 1 0 010 1.414zm9.9 0a1 1 0 10-1.414-1.414l-1.414 1.414a1 1 0 101.414 1.414l1.414-1.414zM5.05 5.05a1 1 0 011.414 0L7.878 6.464A1 1 0 116.464 7.878L5.05 6.464A1 1 0 015.05 5.05z" clip-rule="evenodd"></path>
+        </svg>
+        <svg id="theme-toggle-dark-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8 8 0 1010.586 10.586z"></path>
+        </svg>
+    </button>
+    <!-- Registration Card -->
+    <div class="glass-card p-8 w-full max-w-md z-10 fade-in">
+        <h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-8 text-center">
+            Create Account
+        </h2>
+                
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-lg {% if category == 'success' %}bg-neon-green bg-opacity-20 border border-neon-green text-neon-green{% else %}bg-status-error bg-opacity-20 border border-status-error text-status-error{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="space-y-4 mb-6">
+            <a href="{{ url_for('google_auth.start_google_login') }}" class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <svg class="w-5 h-5" viewBox="0 0 533.5 544.3" aria-hidden="true">
+                    <path fill="#4285f4" d="M533.5 278.4c0-17.4-1.5-34.1-4.3-50.4H272v95.3h147.3c-6.4 34.5-26 63.6-55.3 83.2v68h89.2c52.1-48 80.3-118.7 80.3-196.1z"/>
+                    <path fill="#34a853" d="M272 544.3c74.7 0 137.3-24.7 183.1-66.8l-89.2-68c-24.7 16.9-56.3 27-93.9 27-72.1 0-133.2-48.7-155.1-114.2H25.4v71.9C71.5 497.9 165.3 544.3 272 544.3z"/>
+                    <path fill="#fbbc04" d="M116.9 322.3c-10-29.9-10-62.1 0-92l-71.5-71.9C18.5 206 0 256.2 0 311.4s18.5 105.4 45.4 152.9l71.5-71.9z"/>
+                    <path fill="#ea4335" d="M272 107.7c39.6 0 75.3 13.7 103.3 40.6l77.4-77.4C409.3 24.7 346.7 0 272 0 165.3 0 71.5 46.4 25.4 146.1l71.5 71.9C138.8 156.4 199.9 107.7 272 107.7z"/>
+                </svg>
+                Continue with Google
+            </a>
+            <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                <span class="flex-1 h-px bg-gray-300 dark:bg-gray-700"></span>
+                <span>or create an account</span>
+                <span class="flex-1 h-px bg-gray-300 dark:bg-gray-700"></span>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-6">
+            {{ form.hidden_tag() }}
+            
+            <div>
+                {{ form.username.label(class="block text-sm font-medium text-gray-700 dark:text-secondary mb-2") }}
+                {{ form.username(class="glass-input", placeholder="Choose a username") }}
+                <div id="username-feedback"></div>
+                {% for error in form.username.errors %}
+                    <p class="text-status-error text-xs mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+            
+            <div>
+                {{ form.email.label(class="block text-sm font-medium text-gray-700 dark:text-secondary mb-2") }}
+                {{ form.email(class="glass-input", placeholder="you@example.com") }}
+                {% for error in form.email.errors %}
+                    <p class="text-status-error text-xs mt-1">{{ error }}</p>
+                {% endfor %}
+                <button type="button" id="suggest-username-btn" class="text-neon-cyan text-xs mt-1 hover:underline">Suggest username from email</button>
+            </div>
+            
+            <div>
+                {{ form.password.label(class="block text-sm font-medium text-gray-700 dark:text-secondary mb-2") }}
+                {{ form.password(class="glass-input", placeholder="••••••••") }}
+                <div id="password-strength"></div>
+                {% for error in form.password.errors %}
+                    <p class="text-status-error text-xs mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+            
+            <div>
+                {{ form.password2.label(class="block text-sm font-medium text-gray-700 dark:text-secondary mb-2") }}
+                {{ form.password2(class="glass-input", placeholder="••••••••") }}
+                {% for error in form.password2.errors %}
+                    <p class="text-status-error text-xs mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+            
+            {{ form.submit(class="neon-btn w-full") }}
+        </form>
+        
+        <p class="text-center text-muted mt-6">
+            Already have an account? 
+            <a href="{{ url_for('auth.login') }}" class="text-neon-cyan hover:underline">
+                Login
+            </a>
+        </p>
+    </div>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const usernameInput = document.getElementById('username');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const usernameFeedback = document.getElementById('username-feedback');
+            const passwordStrength = document.getElementById('password-strength');
+            const suggestUsernameBtn = document.getElementById('suggest-username-btn');
+
+            // 1. Check Username Availability
+            usernameInput.addEventListener('input', debounce(async function () {
+                const username = usernameInput.value;
+                if (username.length < 3) {
+                    usernameFeedback.innerHTML = '';
+                    return;
+                }
+                const response = await fetch('/auth/check-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                const data = await response.json();
+                if (data.available) {
+                    usernameFeedback.innerHTML = `<span class="text-green-500 text-xs">Great choice! '${username}' is available.</span>`;
+                } else {
+                    usernameFeedback.innerHTML = `<span class="text-red-500 text-xs">Oops! '${username}' is taken. Try another?</span>`;
+                }
+            }, 500));
+
+            // 2. Suggest Username
+            suggestUsernameBtn.addEventListener('click', async function () {
+                const email = emailInput.value;
+                if (!email) {
+                    usernameFeedback.innerHTML = `<span class="text-yellow-600 text-xs">Please enter your email first.</span>`;
+                    return;
+                }
+                const response = await fetch('/auth/suggest-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await response.json();
+                if (data.suggestion) {
+                    usernameInput.value = data.suggestion;
+                    usernameFeedback.innerHTML = `<span class="text-blue-500 text-xs">How about this one? You can change it!</span>`;
+                }
+            });
+
+            // 3. Password Strength Meter
+            passwordInput.addEventListener('input', async function () {
+                const password = passwordInput.value;
+                if (!password) {
+                    passwordStrength.innerHTML = '';
+                    return;
+                }
+                const response = await fetch('/auth/check-password-strength', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: password })
+                });
+                const data = await response.json();
+                let strengthHTML = `<div class="text-xs">${data.message}</div>`;
+                strengthHTML += `<div class="w-full bg-gray-200 rounded-full h-2.5 mt-2"><div class="h-2.5 rounded-full ${data.color}" style="width: ${data.strength_percent}%"></div></div>`;
+                passwordStrength.innerHTML = strengthHTML;
+            });
+
+            // Debounce function to limit API calls
+            function debounce(func, delay) {
+                let timeout;
+                return function(...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), delay);
+                };
+            }
+        });
+    </script>
+</body>
+</html>

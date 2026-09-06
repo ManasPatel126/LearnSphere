@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Learning Path Generator</title>
+    <!-- Initialize theme immediately to prevent flash -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/glassmorphic.css') }}">
+    <style>
+        body {
+            scroll-behavior: smooth;
+        }
+
+        .agent-mode-btn.agent-mode-active {
+            font-weight: 600;
+            box-shadow: 0 0 0 2px var(--tw-ring-color, currentColor);
+        }
+        
+        .bg-magenta, .magenta-bg {
+            background-color: #ff50c5 !important;
+        }
+        
+        .text-magenta {
+            color: #ff50c5 !important;
+        }
+        
+        .yellow-bg {
+            background-color: #F9C846;
+        }
+        
+        /* Ensure footer uses proper background */
+        footer {
+            background-color: rgba(31, 41, 55, 0.95) !important;
+        }
+        
+        /* Category Accordion Styles */
+        .category-accordion {
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .category-accordion:hover {
+            border-color: rgba(255, 80, 197, 0.4);
+        }
+        
+        .category-header {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .category-header:active {
+            transform: scale(0.98);
+        }
+        
+        .category-accordion.active .category-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .category-content {
+            transition: max-height 0.4s ease-out, opacity 0.3s ease-out;
+            overflow: hidden;
+        }
+        
+        .category-content.hidden {
+            max-height: 0 !important;
+            opacity: 0;
+        }
+        
+        .category-content.show {
+            max-height: 2000px;
+            opacity: 1;
+        }
+        
+        .skill-btn {
+            background: rgba(255, 80, 197, 0.1);
+            border: 1px solid rgba(255, 80, 197, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .skill-btn:hover {
+            background: rgba(255, 80, 197, 0.2);
+            border-color: rgba(255, 80, 197, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .skill-btn.active {
+            background: var(--neon-cyan);
+            color: var(--bg-primary);
+            border-color: var(--neon-cyan);
+        }
+        
+        /* ===== CHAT WIDGET STYLES ===== */
+        .chat-widget {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .chat-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(255, 80, 197, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .chat-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(255, 80, 197, 0.6);
+        }
+        
+        .chat-toggle svg {
+            width: 28px;
+            height: 28px;
+            color: white;
+        }
+        
+        .chat-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--status-success);
+            color: var(--bg-primary);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.4);
+        }
+        
+        .chat-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 400px;
+            height: 600px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, rgba(255, 80, 197, 0.2), rgba(200, 80, 255, 0.2));
+            border-bottom: 1px solid var(--glass-border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .chat-avatar svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+        
+        .chat-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .chat-status {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 2px 0 0 0;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--status-success);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .chat-minimize {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .chat-minimize:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .chat-minimize svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .chat-modes {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .mode-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 80, 197, 0.3);
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, rgba(255, 80, 197, 0.2), rgba(200, 80, 255, 0.2));
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 80, 197, 0.3);
+            border-radius: 3px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .message-avatar svg {
+            width: 18px;
+            height: 18px;
+            color: white;
+        }
+        
+        .user-message .message-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        .message-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .user-message .message-content {
+            background: linear-gradient(135deg, rgba(255, 80, 197, 0.15), rgba(200, 80, 255, 0.15));
+            border-color: rgba(255, 80, 197, 0.3);
+        }
+        
+        .message-list {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .message-list li {
+            margin: 4px 0;
+            color: var(--text-secondary);
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.02);
+            flex-wrap: wrap;
+        }
+        
+        .quick-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(255, 80, 197, 0.1);
+            border: 1px solid rgba(255, 80, 197, 0.3);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-action-btn:hover {
+            background: rgba(255, 80, 197, 0.2);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            transform: translateY(-2px);
+        }
+        
+        .chat-input-container {
+            border-top: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 16px;
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #ffffff !important;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            resize: none;
+            max-height: 120px;
+            transition: all 0.2s;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Light mode input fix */
+        :root:not(.dark) .chat-input {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #0f172a !important;
+        }
+        
+        :root:not(.dark) .chat-input:focus {
+            background: rgba(0, 0, 0, 0.08);
+        }
+        
+        :root:not(.dark) .chat-input::placeholder {
+            color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .chat-send {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .chat-send:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 80, 197, 0.4);
+        }
+        
+        .chat-send:active {
+            transform: scale(0.95);
+        }
+        
+        .chat-send svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+        }
+        
+        .loading-spinner-chat {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .spinner-ring {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .chat-footer-text {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .chat-window {
+                width: calc(100vw - 32px);
+                height: calc(100vh - 120px);
+                bottom: 80px;
+                right: 16px;
+            }
+            
+            .chat-widget {
+                bottom: 16px;
+                right: 16px;
+            }
+        }
+        
+        /* ===== PROGRESS CARD STYLES ===== */
+        .progress-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 32px;
+            margin-top: 24px;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .progress-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .progress-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .progress-icon svg {
+            width: 32px;
+            height: 32px;
+            color: white;
+        }
+        
+        .animate-spin {
+            animation: spin 2s linear infinite;
+        }
+        
+        .progress-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .progress-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 4px 0 0 0;
+        }
+        
+        .progress-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .progress-bar-bg {
+            flex: 1;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            border-radius: 12px;
+            width: 0%;
+            transition: width 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .progress-percentage {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            min-width: 50px;
+            text-align: right;
+        }
+        
+        .progress-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+        }
+        
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            opacity: 0.4;
+        }
+        
+        .progress-step.active {
+            opacity: 1;
+            background: linear-gradient(135deg, rgba(255, 80, 197, 0.15), rgba(200, 80, 255, 0.15));
+            border-color: var(--neon-cyan);
+            transform: scale(1.05);
+        }
+        
+        .progress-step.completed {
+            opacity: 0.7;
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--status-success);
+        }
+        
+        .step-icon {
+            font-size: 32px;
+            filter: grayscale(100%);
+            transition: filter 0.3s ease;
+        }
+        
+        .progress-step.active .step-icon,
+        .progress-step.completed .step-icon {
+            filter: grayscale(0%);
+        }
+        
+        .step-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        
+        .progress-step.active .step-text {
+            color: var(--neon-cyan);
+            font-weight: 600;
+        }
+        
+        .progress-step.completed .step-text {
+            color: var(--status-success);
+        }
+        
+        @media (max-width: 768px) {
+            .progress-card {
+                padding: 24px 20px;
+            }
+            
+            .progress-steps {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .progress-title {
+                font-size: 18px;
+            }
+        }
+        
+        .wave-divider {
+            position: relative;
+            height: 70px;
+            width: 100%;
+        }
+        
+        .wave-divider svg {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 70px;
+        }
+
+        /* Agent Cards */
+        .agent-card {
+            transition: all 0.3s ease;
+            border-top: 4px solid transparent;
+        }
+        
+        .agent-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .agent-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 24px;
+        }
+        
+        .chat-message {
+            max-width: 80%;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .chat-message.user {
+            background-color: #ff50c5;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .chat-message.assistant {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            justify-content: center;
+            padding: 10px 0;
+        }
+        
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            margin: 0 2px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Chat interface styles */
+        .chat-container {
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        
+        .chat-messages {
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 #edf2f7;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: #edf2f7;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: #cbd5e0;
+            border-radius: 3px;
+        }
+        
+        .chat-input-container {
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        
+        .chat-input {
+            resize: none;
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 1px #a78bfa;
+        }
+        
+        .send-button {
+            transition: all 0.2s;
+        }
+        
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .suggestion-button {
+            transition: all 0.2s;
+        }
+        
+        .suggestion-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .agent-card {
+                margin-bottom: 20px;
+            }
+            
+            .chat-message {
+                max-width: 90%;
+            }
+            
+            .chat-messages {
+                max-height: 300px;
+            }
+        }
+        
+        /* Animation for message appearance */
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message {
+            animation: messageAppear 0.3s ease-out forwards;
+        }
+        
+        .loading-spinner {
+            display: none;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff50c5;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-hover {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-hover:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.5s ease;
+        }
+        
+        .btn-hover:hover:after {
+            left: 100%;
+        }
+    </style>
+    <style>
+        /* Stripe hover effect for nav links */
+        .nav-stripe a {
+            position: relative;
+        }
+        .nav-stripe a::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -4px;
+            width: 100%;
+            height: 3px;
+            background-color: #ff50c5; /* magenta */
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        .nav-stripe a:hover::after {
+            transform: scaleX(1);
+        }
+    </style>
+</head>
+<body class="grid-background min-h-screen">
+    <!-- Navigation -->
+    <nav class="glass-nav py-4 px-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-white">
+                Learning<span class="text-neon-cyan">Path</span>
+            </a>
+            <div class="hidden md:flex items-center gap-6">
+                {% if current_user.is_authenticated %}
+                    <a href="/dashboard" class="text-secondary hover:text-neon-cyan transition">Dashboard</a>
+                    <a href="{{ url_for('auth.logout') }}" class="text-secondary hover:text-neon-cyan transition">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="text-secondary hover:text-neon-cyan transition">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="neon-btn-sm">Register</a>
+                {% endif %}
+            </div>
+            <!-- Desktop dark mode toggle -->
+            <button id="theme-toggle" class="ml-2 inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-magenta" aria-label="Toggle dark mode">
+                <svg id="theme-toggle-light-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 15a5 5 0 100-10 5 5 0 000 10zM10 1a1 1 0 011 1v1a1 1 0 11-2 0V2a1 1 0 011-1zm0 14a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm9-5a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM3 10a1 1 0 01-1 1H1a1 1 0 110-2h1a1 1 0 011 1zm12.364-6.364a1 1 0 010 1.414L14.95 6.464a1 1 0 01-1.414-1.414l1.414-1.414a1 1 0 011.414 0zM5.05 14.95a1 1 0 011.414 0l1.414-1.414a1 1 0 10-1.414-1.414L5.05 13.536a1 1 0 010 1.414zm9.9 0a1 1 0 10-1.414-1.414l-1.414 1.414a1 1 0 101.414 1.414l1.414-1.414zM5.05 5.05a1 1 0 011.414 0L7.878 6.464A1 1 0 116.464 7.878L5.05 6.464A1 1 0 015.05 5.05z" clip-rule="evenodd"></path>
+                </svg>
+                <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8 8 0 1010.586 10.586z"></path>
+                </svg>
+            </button>
+        </div>
+            <!-- Mobile menu button -->
+            <button id="mobile-menu-button" class="md:hidden text-secondary" aria-expanded="false">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden mt-4 space-y-2">
+            {% if current_user.is_authenticated %}
+                <a href="/dashboard" class="block text-secondary hover:text-neon-cyan transition">Dashboard</a>
+                <a href="{{ url_for('auth.logout') }}" class="block text-secondary hover:text-neon-cyan transition">Logout</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="block text-secondary hover:text-neon-cyan transition">Login</a>
+                <a href="{{ url_for('auth.register') }}" class="block neon-btn-sm">Register</a>
+            {% endif %}
+            <!-- Mobile dark mode toggle -->
+            <button id="theme-toggle-mobile" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-magenta" aria-label="Toggle dark mode">
+                <svg id="theme-toggle-mobile-light-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 15a5 5 0 100-10 5 5 0 000 10zM10 1a1 1 0 011 1v1a1 1 0 11-2 0V2a1 1 0 011-1zm0 14a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm9-5a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM3 10a1 1 0 01-1 1H1a1 1 0 110-2h1a1 1 0 011 1zm12.364-6.364a1 1 0 010 1.414L14.95 6.464a1 1 0 01-1.414-1.414l1.414-1.414a1 1 0 011.414 0zM5.05 14.95a1 1 0 011.414 0l1.414-1.414a1 1 0 10-1.414-1.414L5.05 13.536a1 1 0 010 1.414zm9.9 0a1 1 0 10-1.414-1.414l-1.414 1.414a1 1 0 101.414 1.414l1.414-1.414zM5.05 5.05a1 1 0 011.414 0L7.878 6.464A1 1 0 116.464 7.878L5.05 6.464A1 1 0 015.05 5.05z" clip-rule="evenodd"></path>
+                </svg>
+                <svg id="theme-toggle-mobile-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8 8 0 1010.586 10.586z"></path>
+                </svg>
+            </button>
+        </div>
+    </nav>
+        
+        <!-- Hero Section -->
+        <section class="py-20 px-6">
+            <div class="container mx-auto text-center max-w-4xl">
+                <h1 class="text-6xl font-bold text-white mb-6">
+                    AI Learning Path<br><span class="text-neon-cyan">Generator</span>
+                </h1>
+                <p class="text-2xl text-secondary mb-12">
+                    Create personalized learning journeys powered by AI
+                </p>
+                <a href="#path-form" class="neon-btn text-lg">Start Your Journey</a>
+            </div>
+        </section>
+        
+        <!-- Form Section -->
+        <section id="path-form" class="py-16 px-6">
+            <div class="container mx-auto max-w-4xl">
+                <h2 class="text-4xl font-bold mb-12 text-center text-white">Create Your <span class="text-neon-cyan">Learning Path</span></h2>
+                
+                <!-- Error message (if any) -->
+                {% if error %}
+                <div class="bg-red-50 text-red-800 p-4 rounded-lg mb-6">
+                    {{ error }}
+                </div>
+                {% endif %}
+                
+                <div class="glass-card p-8">
+                    <form id="pathGeneratorForm" class="space-y-6" action="/generate" method="POST">
+                        <!-- Expertise Level -->
+                        <div>
+                            <label for="expertise_level" class="block text-lg font-medium text-secondary mb-2">Your current expertise level</label>
+                            <div class="select-wrapper">
+                                <select id="expertise_level" name="expertise_level" class="glass-select" required>
+                                    {% for level, description in expertise_levels.items() %}
+                                        <option value="{{ level }}">{{ level.title() }} - {{ description }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Topic with Categories -->
+                        <div>
+                            <label for="topic" class="block text-lg font-medium text-secondary mb-2">What do you want to learn?</label>
+                            
+                            <!-- Custom Topic Input (moved to top) -->
+                            <input type="text" id="topic" name="topic" class="glass-input mb-4" placeholder="Type a topic or select from categories below..." required>
+                            
+                            <!-- Collapsible Categories with All Skills -->
+                            <div class="mb-4">
+                                <h4 class="text-sm font-medium text-secondary mb-3">Browse by Category:</h4>
+                                <div class="space-y-2">
+                                    {% for category in categories %}
+                                    <div class="category-accordion glass-card-no-hover">
+                                        <button type="button" class="category-header w-full text-left px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-all rounded-lg" data-category="{{ category }}">
+                                            <span class="flex items-center gap-2 text-secondary font-medium">
+                                                <span class="text-xl">
+                                                    {% if 'Cloud' in category %}☁️
+                                                    {% elif 'Data Science' in category or 'AI' in category %}🤖
+                                                    {% elif 'Web' in category %}🌐
+                                                    {% elif 'Mobile' in category %}📱
+                                                    {% elif 'Design' in category %}🎨
+                                                    {% elif 'Business' in category %}💼
+                                                    {% else %}💡
+                                                    {% endif %}
+                                                </span>
+                                                <span>{{ category }}</span>
+                                                <span class="text-xs text-muted">({{ skills_by_category[category]|length }} skills)</span>
+                                            </span>
+                                            <svg class="category-arrow w-5 h-5 text-secondary transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </button>
+                                        <div class="category-content hidden px-4 pb-4">
+                                            <div class="flex flex-wrap gap-2 mt-2">
+                                                {% for skill in skills_by_category[category] %}
+                                                <button type="button" class="skill-btn topic-btn text-sm" data-topic="{{ skill }}">
+                                                    {{ skill }}
+                                                </button>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Access: Most Popular Skills -->
+                            <div class="mb-4">
+                                <button type="button" id="showPopularSkills" class="text-sm text-neon-cyan hover:text-neon-purple transition-colors flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    Quick Access: Popular Skills
+                                </button>
+                                <div id="popularSkillsContainer" class="hidden mt-3 flex flex-wrap gap-2">
+                                    {% for skill in all_skills[:15] %}
+                                    <button type="button" class="skill-btn topic-btn text-sm" data-topic="{{ skill }}">
+                                        {{ skill }}
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Learning Style -->
+                        <div>
+                            <label for="learning_style" class="block text-lg font-medium text-secondary mb-2">Your Learning Style</label>
+                            <div class="select-wrapper mb-4">
+                                <select id="learning_style" name="learning_style" class="glass-select" required>
+                                    <option value="visual">Visual - Learn best through images, diagrams, and spatial understanding</option>
+                                    <option value="auditory">Auditory - Learn best through listening and speaking</option>
+                                    <option value="reading">Reading/Writing - Learn best through written materials and note-taking</option>
+                                    <option value="kinesthetic">Kinesthetic - Learn best through hands-on activities and physical interaction</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Duration in Weeks -->
+                        <div>
+                            <label for="duration_weeks" class="block text-lg font-medium text-secondary mb-2">
+                                Duration (in weeks)
+                            </label>
+                            <input type="number" id="duration_weeks" name="duration_weeks" min="1" max="52" required
+                                   class="glass-input"
+                                   placeholder="e.g., 4">
+                            <p class="mt-1 text-sm text-muted">How many weeks do you plan to study this topic?</p>
+                        </div>
+                        
+                        <!-- Time Commitment -->
+                        <div>
+                            <label for="time_commitment" class="block text-lg font-medium text-secondary mb-2">How much time can you commit weekly?</label>
+                            <div class="select-wrapper">
+                                <select id="time_commitment" name="time_commitment" class="glass-select" required>
+                                    {% for commitment, description in time_commitments.items() %}
+                                        <option value="{{ commitment }}">{{ commitment.title() }} - {{ description }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        
+                        <!-- Submit Button -->
+                        <div class="pt-6">
+                            <button type="submit" id="generateBtn" class="neon-btn w-full py-4 text-lg font-bold flex items-center justify-center gap-3">
+                                <span id="btnText">Generate My Learning Path</span>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Progress Card (Hidden by default) -->
+                    <div id="progressCard" class="progress-card hidden">
+                        <div class="progress-card-header">
+                            <div class="progress-icon">
+                                <svg class="animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="progress-title">Generating Your Learning Path</h3>
+                                <p class="progress-subtitle" id="progressStatus">Initializing AI...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="progressBar"></div>
+                            </div>
+                            <div class="progress-percentage" id="progressPercentage">0%</div>
+                        </div>
+                        
+                        <div class="progress-steps">
+                            <div class="progress-step" id="step1">
+                                <div class="step-icon">🔍</div>
+                                <div class="step-text">Analyzing Requirements</div>
+                            </div>
+                            <div class="progress-step" id="step2">
+                                <div class="step-icon">🤖</div>
+                                <div class="step-text">AI Processing</div>
+                            </div>
+                            <div class="progress-step" id="step3">
+                                <div class="step-icon">📚</div>
+                                <div class="step-text">Curating Resources</div>
+                            </div>
+                            <div class="progress-step" id="step4">
+                                <div class="step-icon">✨</div>
+                                <div class="step-text">Finalizing Path</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    
+    
+    <!-- AI Chat Widget -->
+    <div id="chatWidget" class="chat-widget">
+        <!-- Chat Button -->
+        <button id="chatToggle" class="chat-toggle" aria-label="Open AI Assistant">
+            <svg class="chat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+            </svg>
+            <svg class="close-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <span class="chat-badge">AI</span>
+        </button>
+
+        <!-- Chat Window -->
+        <div id="chatWindow" class="chat-window hidden">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="flex items-center gap-3">
+                    <div class="chat-avatar">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="chat-title">AI Learning Assistant</h3>
+                        <p class="chat-status">
+                            <span class="status-dot"></span>
+                            Online
+                        </p>
+                    </div>
+                </div>
+                <button id="chatMinimize" class="chat-minimize" aria-label="Minimize chat">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Chat Mode Selector -->
+            <div class="chat-modes">
+                <button class="mode-btn active" data-mode="general">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    Chat
+                </button>
+                <button class="mode-btn" data-mode="path">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    </svg>
+                    Path
+                </button>
+                <button class="mode-btn" data-mode="research">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Research
+                </button>
+            </div>
+
+            <!-- Chat Messages -->
+            <div id="chatMessages" class="chat-messages">
+                <div class="message bot-message">
+                    <div class="message-avatar">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                    <div class="message-content">
+                        <p>👋 Hi! I'm your AI Learning Assistant. I can help you with:</p>
+                        <ul class="message-list">
+                            <li>💬 Answer questions about any topic</li>
+                            <li>🎯 Create personalized learning paths</li>
+                            <li>🔍 Research skills and career insights</li>
+                            <li>📊 Track your learning progress</li>
+                        </ul>
+                        <p class="mt-2">How can I help you today?</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div id="quickActions" class="quick-actions">
+                <button class="quick-action-btn" data-action="create-path">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Create Learning Path
+                </button>
+                <button class="quick-action-btn" data-action="explore-skills">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Explore Skills
+                </button>
+                <button class="quick-action-btn" data-action="salary-info">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Salary Info
+                </button>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea 
+                        id="chatInput" 
+                        class="chat-input" 
+                        placeholder="Ask me anything..."
+                        rows="1"
+                    ></textarea>
+                    <button id="chatSend" class="chat-send" aria-label="Send message">
+                        <svg class="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                        <div class="loading-spinner-chat hidden">
+                            <div class="spinner-ring"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="chat-footer-text">
+                    Powered by AI • Press Enter to send
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white py-8 px-6">
+        <div class="container mx-auto text-center text-gray-500">
+            <p>Built by <a href="https://www.linkedin.com/in/arun-kumar-chukkala-391768204/" target="_blank" class="text-magenta hover:underline">Arun Kumar Chukkala</a></p>
+        </div>
+    </footer>
+    
+    <!-- External Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Configure marked.js
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: false,
+            mangle: false
+        });
+    </script>
+    
+    <!-- Main Application Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form submission with animated progress card
+            const pathGeneratorForm = document.getElementById('pathGeneratorForm');
+            const generateBtn = document.getElementById('generateBtn');
+            const progressCard = document.getElementById('progressCard');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercentage = document.getElementById('progressPercentage');
+            const progressStatus = document.getElementById('progressStatus');
+
+            if (pathGeneratorForm) {
+                pathGeneratorForm.addEventListener('submit', function(e) {
+                    // Show progress card
+                    if (progressCard) {
+                        progressCard.classList.remove('hidden');
+                        
+                        // Scroll to progress card
+                        setTimeout(() => {
+                            progressCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                    }
+                    
+                    // Disable button
+                    if (generateBtn) {
+                        generateBtn.disabled = true;
+                        generateBtn.style.opacity = '0.5';
+                    }
+                    
+                    // Animate progress through stages
+                    animateProgress();
+                });
+            }
+
+            function animateProgress() {
+                const stages = [
+                    { step: 1, progress: 25, status: 'Analyzing your requirements...', duration: 1500 },
+                    { step: 2, progress: 50, status: 'AI is processing your learning path...', duration: 2000 },
+                    { step: 3, progress: 75, status: 'Curating personalized resources...', duration: 1500 },
+                    { step: 4, progress: 95, status: 'Finalizing your learning path...', duration: 1000 }
+                ];
+
+                let currentStage = 0;
+
+                function updateStage() {
+                    if (currentStage < stages.length) {
+                        const stage = stages[currentStage];
+                        
+                        // Update progress bar
+                        if (progressBar) {
+                            progressBar.style.width = stage.progress + '%';
+                        }
+                        if (progressPercentage) {
+                            progressPercentage.textContent = stage.progress + '%';
+                        }
+                        if (progressStatus) {
+                            progressStatus.textContent = stage.status;
+                        }
+                        
+                        // Mark previous steps as completed
+                        for (let i = 1; i < stage.step; i++) {
+                            const stepEl = document.getElementById('step' + i);
+                            if (stepEl) {
+                                stepEl.classList.remove('active');
+                                stepEl.classList.add('completed');
+                            }
+                        }
+                        
+                        // Mark current step as active
+                        const currentStepEl = document.getElementById('step' + stage.step);
+                        if (currentStepEl) {
+                            currentStepEl.classList.add('active');
+                        }
+                        
+                        currentStage++;
+                        setTimeout(updateStage, stage.duration);
+                    }
+                }
+
+                updateStage();
+            }
+
+            // Mobile menu (dark mode handled by theme.js)
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', function() {
+                    if (mobileMenu) {
+                        const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+                        mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+                        mobileMenu.classList.toggle('hidden');
+                    }
+                });
+            }
+
+            // Accordion functionality for categories
+            const categoryHeaders = document.querySelectorAll('.category-header');
+            
+            categoryHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const accordion = this.closest('.category-accordion');
+                    const content = accordion.querySelector('.category-content');
+                    const isActive = accordion.classList.contains('active');
+                    
+                    // Close all other accordions
+                    document.querySelectorAll('.category-accordion').forEach(acc => {
+                        if (acc !== accordion) {
+                            acc.classList.remove('active');
+                            const otherContent = acc.querySelector('.category-content');
+                            otherContent.classList.remove('show');
+                            otherContent.classList.add('hidden');
+                        }
+                    });
+                    
+                    // Toggle current accordion
+                    if (isActive) {
+                        accordion.classList.remove('active');
+                        content.classList.remove('show');
+                        content.classList.add('hidden');
+                    } else {
+                        accordion.classList.add('active');
+                        content.classList.remove('hidden');
+                        content.classList.add('show');
+                    }
+                });
+            });
+            
+            // Popular Skills toggle
+            const showPopularBtn = document.getElementById('showPopularSkills');
+            const popularContainer = document.getElementById('popularSkillsContainer');
+            
+            if (showPopularBtn && popularContainer) {
+                showPopularBtn.addEventListener('click', function() {
+                    popularContainer.classList.toggle('hidden');
+                    const icon = this.querySelector('svg');
+                    if (popularContainer.classList.contains('hidden')) {
+                        this.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg> Quick Access: Popular Skills`;
+                    } else {
+                        this.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg> Hide Popular Skills`;
+                    }
+                });
+            }
+            
+            // Skill button handlers
+            const topicInput = document.getElementById('topic');
+            
+            // Use event delegation for skill buttons (more efficient)
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('skill-btn')) {
+                    const topic = e.target.getAttribute('data-topic') || e.target.textContent.trim();
+                    
+                    // Remove active from all skill buttons
+                    document.querySelectorAll('.skill-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Set active on clicked button
+                    e.target.classList.add('active');
+                    
+                    // Set the topic input value
+                    if (topicInput) {
+                        topicInput.value = topic;
+                        topicInput.focus();
+                    }
+                }
+            });
+
+            // ===== CHAT WIDGET FUNCTIONALITY =====
+            const chatToggle = document.getElementById('chatToggle');
+            const chatWindow = document.getElementById('chatWindow');
+            const chatMinimize = document.getElementById('chatMinimize');
+            const chatInput = document.getElementById('chatInput');
+            const chatSend = document.getElementById('chatSend');
+            const chatMessages = document.getElementById('chatMessages');
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            const quickActionButtons = document.querySelectorAll('.quick-action-btn');
+            
+            let currentMode = 'general';
+            let conversationHistory = [];
+
+            // Toggle chat window
+            chatToggle.addEventListener('click', function() {
+                const isHidden = chatWindow.classList.contains('hidden');
+                chatWindow.classList.toggle('hidden');
+                
+                // Toggle icons
+                const chatIcon = chatToggle.querySelector('.chat-icon');
+                const closeIcon = chatToggle.querySelector('.close-icon');
+                chatIcon.classList.toggle('hidden');
+                closeIcon.classList.toggle('hidden');
+                
+                if (!isHidden) {
+                    // Closing
+                    chatToggle.style.transform = 'rotate(0deg)';
+                } else {
+                    // Opening
+                    chatToggle.style.transform = 'rotate(90deg)';
+                    setTimeout(() => {
+                        chatToggle.style.transform = 'rotate(0deg)';
+                    }, 300);
+                    chatInput.focus();
+                }
+            });
+
+            // Minimize chat
+            chatMinimize.addEventListener('click', function() {
+                chatWindow.classList.add('hidden');
+                const chatIcon = chatToggle.querySelector('.chat-icon');
+                const closeIcon = chatToggle.querySelector('.close-icon');
+                chatIcon.classList.remove('hidden');
+                closeIcon.classList.add('hidden');
+            });
+
+            // Mode switching
+            modeButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    modeButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentMode = this.getAttribute('data-mode');
+                    
+                    // Update placeholder based on mode
+                    if (currentMode === 'general') {
+                        chatInput.placeholder = 'Ask me anything...';
+                    } else if (currentMode === 'path') {
+                        chatInput.placeholder = 'What do you want to learn?';
+                    } else if (currentMode === 'research') {
+                        chatInput.placeholder = 'Research a skill or career...';
+                    }
+                });
+            });
+
+            // Quick actions
+            quickActionButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    
+                    if (action === 'create-path') {
+                        chatInput.value = 'I want to create a learning path for ';
+                        chatInput.focus();
+                        currentMode = 'path';
+                        document.querySelector('[data-mode="path"]').click();
+                    } else if (action === 'explore-skills') {
+                        sendMessage('Show me the trending skills in AI and tech');
+                    } else if (action === 'salary-info') {
+                        chatInput.value = 'What is the salary range for ';
+                        chatInput.focus();
+                        currentMode = 'research';
+                        document.querySelector('[data-mode="research"]').click();
+                    }
+                });
+            });
+
+            // Auto-resize textarea
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            // Send message on Enter (Shift+Enter for new line)
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Send button click
+            chatSend.addEventListener('click', sendMessage);
+
+            // Send message function
+            async function sendMessage(customMessage = null) {
+                const message = customMessage || chatInput.value.trim();
+                if (!message) return;
+
+                // Add user message to UI
+                addMessageToUI(message, 'user');
+                
+                // Clear input
+                if (!customMessage) {
+                    chatInput.value = '';
+                    chatInput.style.height = 'auto';
+                }
+
+                // Show loading
+                showLoading(true);
+
+                try {
+                    // Determine endpoint based on mode
+                    let endpoint = '/direct_chat';
+                    let payload = {
+                        message: message,
+                        mode: currentMode,
+                        conversation_history: conversationHistory
+                    };
+
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const botMessage = data.response || data.data?.answer || 'I received your message!';
+                        addMessageToUI(botMessage, 'bot');
+                        
+                        // Update conversation history
+                        conversationHistory.push({
+                            role: 'user',
+                            content: message
+                        });
+                        conversationHistory.push({
+                            role: 'assistant',
+                            content: botMessage
+                        });
+
+                        // Keep only last 10 messages
+                        if (conversationHistory.length > 20) {
+                            conversationHistory = conversationHistory.slice(-20);
+                        }
+                    } else {
+                        addMessageToUI('Sorry, I encountered an error. Please try again.', 'bot');
+                    }
+                } catch (error) {
+                    console.error('Chat error:', error);
+                    addMessageToUI('Sorry, I\'m having trouble connecting. Please try again.', 'bot');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Add message to UI
+            function addMessageToUI(message, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                const avatarSvg = sender === 'bot' 
+                    ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>'
+                    : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
+                
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">${avatarSvg}</div>
+                    <div class="message-content">${formatMessage(message)}</div>
+                `;
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            // Format message (support markdown)
+            function formatMessage(message) {
+                // Basic markdown support
+                message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                message = message.replace(/\n/g, '<br>');
+                return message;
+            }
+
+            // Show/hide loading
+            function showLoading(show) {
+                const sendIcon = chatSend.querySelector('.send-icon');
+                const loadingSpinner = chatSend.querySelector('.loading-spinner-chat');
+                
+                if (show) {
+                    sendIcon.classList.add('hidden');
+                    loadingSpinner.classList.remove('hidden');
+                    chatSend.disabled = true;
+                } else {
+                    sendIcon.classList.remove('hidden');
+                    loadingSpinner.classList.add('hidden');
+                    chatSend.disabled = false;
+                }
+            }
+        });
+    </script>
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+</body>
+</html>
